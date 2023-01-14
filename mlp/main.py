@@ -14,22 +14,20 @@ def main():
         [np.array([0, 1, 1]), np.array([1, 0, 0])], # 4
         [np.array([1, 0, 0]), np.array([1, 0, 1])], # 5
         [np.array([1, 0, 1]), np.array([1, 1, 0])], # 6
-        [np.array([1, 1, 0]), np.array([1, 1, 1])] # 7
+        [np.array([1, 1, 0]), np.array([1, 1, 1])]  # 7
     ]
     n_datapoints = 7;
     program.scramble()
-    iterations = 2000
+    iterations = 200
     for i in range(iterations):
         program.train(input_data_list, n_datapoints)
-        #print(f"{round((i/iterations)*100,1)}%")
+        print(f"{round((i/iterations)*100,1)}% | Cost: {round(program.current_slope, 5)}, Slope: {round(program.current_slope, 5)}")
 
     while(True):
         num = input("Write a 3 bit number: ")
         input_layer = np.array([int(num[0]), int(num[1]), int(num[2])])
-        print(f"Input: {input_layer[0]} {input_layer[1]} {input_layer[2]}")
-
         result = program.execute(input_layer)
-        print(f"Result: {round(result[0], 4)} {round(result[1], 4)} {round(result[2], 4)}")
+        print(f"Result: {round(result[0])}{round(result[1])}{round(result[2])}")
 
 def sigmoid(x):
     return 1 / (1 + m_e**(-x))
@@ -42,6 +40,8 @@ def deriv_sigmoid(x):
 
 # Main class
 class Program():
+    current_cost = 1
+
     n_in = 3
     n_L1 = 10
     n_L2 = 10
@@ -106,10 +106,6 @@ class Program():
     def train(self, input_data_list, n_datapoints):
         n = self.n_L1 * (1 + self.n_in) + self.n_L2 * (1 + self.n_L1) + self.n_out * (1 + self.n_L2) # Number of weights and biases
         gradient_vec = np.zeros(n) # Whole gradient vector
-
-        # ALL WE DO HERE IS COMPUTE A DERIVATIVE (THE GRADIENT)
-        # DO THIS IN ONE PLACE
-        # THERE WILL BE A LONG CHAIN RULE THAT WILL GIVE US THIS DERIVATIVE
 
         total_cost = 0
         for data_index in range(n_datapoints):
@@ -190,7 +186,10 @@ class Program():
         self.bias_L1 -= gradient_vec[[n_total_out + n_total_L2 + i for i in range(n_total_L1) if i%(self.n_in+1)==0]]
         self.weights_L1 -= gradient_vec[[n_total_out + n_total_L2 + i for i in range(n_total_L1) if i%(self.n_in+1)]].reshape(self.n_L1, self.n_in)
 
-        print(f"Slope: {round(sum([abs(x) for x in gradient_vec])/n_datapoints, 6)}, Cost:{round(total_cost/n_datapoints, 6)}, Nan: {isnan(self.weights_L1[0,0])}")
+        self.current_cost = total_cost/n_datapoints
+        self.current_slope = sum([abs(x) for x in gradient_vec])/n_datapoints
+
+        #print(f"Slope: {round(self.current_slope, 6)}, Cost:{round(self.current_cost, 6)}, Nan: {isnan(self.weights_L1[0,0])}")
 
 if __name__ == "__main__":
     main()
